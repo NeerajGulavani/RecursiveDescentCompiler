@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recursive-Descent Compiler Studio</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --success: #4ade80;
+            --error: #f87171;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        header { background-color: var(--panel-bg); border-bottom: 1px solid var(--border-color); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        header h1 { font-size: 1.25rem; font-weight: 600; color: var(--accent); }
+        .status-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; background: var(--border-color); }
+        .status-SUCCESS { background: rgba(74, 222, 128, 0.2); color: var(--success); border: 1px solid var(--success); }
+        .status-ERROR { background: rgba(248, 113, 113, 0.2); color: var(--error); border: 1px solid var(--error); }
+        
+        main { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1.5rem; height: calc(100vh - 70px); }
+        .right-column { display: flex; flex-direction: column; gap: 1rem; height: 100%; }
+        
+        .panel { background-color: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; display: flex; flex-direction: column; overflow: hidden; }
+        .panel-header { background: rgba(0,0,0,0.2); padding: 0.75rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .panel-body { padding: 1rem; flex: 1; display: flex; flex-direction: column; overflow: auto; }
+        
+        textarea { width: 100%; flex: 1; background: #090d16; color: var(--text-main); border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 1rem; font-family: 'Courier New', Courier, monospace; font-size: 1rem; resize: none; line-height: 1.5; }
+        textarea:focus { outline: none; border-color: var(--accent); }
+        
+        pre { background: #090d16; color: var(--success); padding: 1rem; border-radius: 0.375rem; border: 1px solid var(--border-color); font-family: 'Courier New', Courier, monospace; font-size: 0.9rem; white-space: pre-wrap; word-break: break-all; flex: 1; overflow-y: auto; }
+        .error-pre { color: var(--error); }
+
+        .btn-compile { background-color: var(--accent); color: #0f172a; border: none; padding: 0.5rem 1.25rem; font-weight: 600; border-radius: 0.375rem; cursor: pointer; transition: opacity 0.2s; }
+        .btn-compile:hover { opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚡ Recursive-Descent Compiler</h1>
+        <div class="status-badge status-{{ status }}">{{ status }}</div>
+    </header>
+    <main>
+        <!-- Left Panel: Source Code Editor -->
+        <form class="panel" method="POST">
+            <div class="panel-header">
+                <span>SOURCE PROGRAM</span>
+                <button type="submit" class="btn-compile">Compile & Analyze 🚀</button>
+            </div>
+            <div class="panel-body">
+                <textarea name="code" placeholder="Enter source code here...">{{ code }}</textarea>
+            </div>
+        </form>
+        
+        <!-- Right Column: Split into TAC and Symbol Table panels -->
+        <div class="right-column">
+            <div class="panel" style="flex: 1.2;">
+                <div class="panel-header">
+                    <span>THREE-ADDRESS CODE (TAC Intermediate Representation)</span>
+                </div>
+                <div class="panel-body">
+                    {% if error %}
+                        <pre class="error-pre">{{ error }}</pre>
+                    {% else %}
+                        <pre>{{ tac_output if tac_output else "Awaiting compilation..." }}</pre>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="panel" style="flex: 1;">
+                <div class="panel-header">
+                    <span>SYMBOL TABLE REGISTRY (Structured Data View)</span>
+                </div>
+                <div class="panel-body" style="padding: 0;">
+                    {% if error %}
+                        <pre class="error-pre" style="margin: 1rem;">Compilation failed.</pre>
+                    {% elif symbol_rows %}
+                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                                    <th style="padding: 0.75rem 1rem;">Identifier Name</th>
+                                    <th style="padding: 0.75rem 1rem;">Data Type</th>
+                                    <th style="padding: 0.75rem 1rem;">Scope Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in symbol_rows %}
+                                <tr style="border-bottom: 1px solid rgba(51, 65, 85, 0.4);">
+                                    <td style="padding: 0.75rem 1rem; font-family: monospace; color: var(--accent);">{{ row.name }}</td>
+                                    <td style="padding: 0.75rem 1rem;"><span style="background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem;">{{ row.type }}</span></td>
+                                    <td style="padding: 0.75rem 1rem; color: var(--text-muted);">{{ row.scope }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <pre style="margin: 1rem;">Awaiting symbol registration...</pre>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

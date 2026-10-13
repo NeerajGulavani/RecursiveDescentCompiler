@@ -1,0 +1,42 @@
+CONTEXT-FREE GRAMMAR
+
+Program         -> StatementList
+
+StatementList   -> Statement StatementList
+                 | epsilon
+
+Statement       -> Declaration
+                 | Assignment
+
+Declaration     -> Type ID [ ASSIGN Expression ] SEMICOLON
+
+Type            -> INT
+                 | FLOAT
+
+Assignment      -> ID ASSIGN Expression SEMICOLON
+
+Expression      -> Term ExpressionPrime
+
+ExpressionPrime -> PLUS Term ExpressionPrime
+                 | MINUS Term ExpressionPrime
+                 | epsilon
+
+Term            -> Factor TermPrime
+
+TermPrime       -> MULTIPLY Factor TermPrime
+                 | DIVIDE Factor TermPrime
+                 | epsilon
+
+Factor          -> ID
+                 | NUMBER
+                 | LPAREN Expression RPAREN
+
+
+TERMINALS:
+INT, FLOAT, ID, NUMBER, +, -, *, /, =, ;, (, )
+
+EXAMPLES:
+int x;
+float y;
+x = 10 + 20 * 5;
+y = (x + 30) / 2;

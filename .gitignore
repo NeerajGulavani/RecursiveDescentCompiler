@@ -1,0 +1,10 @@
+# Compiled binaries
+compiler
+
+# Generated Flex/Bison files
+lex.yy.c
+
+# Python / Flask cache
+__pycache__/
+*.pyc
+.DS_Store
