@@ -42,7 +42,7 @@
 </head>
 <body>
     <header>
-        <h1>⚡ Recursive-Descent Compiler</h1>
+        <h1>Recursive-Descent Compiler</h1>
         <div class="status-badge status-{{ status }}">{{ status }}</div>
     </header>
     <main>
@@ -50,7 +50,7 @@
         <form class="panel" method="POST">
             <div class="panel-header">
                 <span>SOURCE PROGRAM</span>
-                <button type="submit" class="btn-compile">Compile & Analyze 🚀</button>
+                <button type="submit" class="btn-compile">Compile & Analyze </button>
             </div>
             <div class="panel-body">
                 <textarea name="code" placeholder="Enter source code here...">{{ code }}</textarea>
@@ -62,6 +62,7 @@
             <div class="panel" style="flex: 1.2;">
                 <div class="panel-header">
                     <span>THREE-ADDRESS CODE (TAC Intermediate Representation)</span>
+                    <a href="/view-assembly" target="_blank" style="background: #38bdf8; color: #0f172a; padding: 0.2rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: bold;">View Assembly &rarr;</a>
                 </div>
                 <div class="panel-body">
                     {% if error %}

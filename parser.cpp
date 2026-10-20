@@ -7,6 +7,19 @@
 
 using namespace std;
 
+
+
+// Define the global TAC instructions container
+std::vector<std::string> tac_instructions;
+
+// --- FORWARD DECLARATIONS ---
+static void nextToken();
+static string expression();
+static string term();
+static string factor();
+
+static int syntax_error_count = 0;
+
 static int currentToken = TOK_EOF;
 static string currentLexeme;
 
@@ -21,12 +34,29 @@ static string newTemp() {
 }
 
 static void emitTAC(const string& result, const string& arg1, const string& op, const string& arg2) {
+    string tac_line = "";
     if (op.empty()) {
         // Assignment format: x = arg1
-        cout << "  [TAC] " << result << " = " << arg1 << "\n";
+        tac_line = result + " = " + arg1;
+        cout << "  [TAC] " << tac_line << "\n";
     } else {
         // Binary operation format: t1 = arg1 op arg2
-        cout << "  [TAC] " << result << " = " << arg1 << " " << op << " " << arg2 << "\n";
+        tac_line = result + " = " + arg1 + " " + op + " " + arg2;
+        cout << "  [TAC] " << tac_line << "\n";
+    }
+    // Store it in our vector for Target Code Generation!
+    tac_instructions.push_back(tac_line);
+}
+
+static void synchronize() {
+    syntax_error_count++;
+    // Panic-mode recovery: consume tokens until ';' or EOF
+    while (currentToken != TOK_EOF) {
+        if (currentToken == TOK_SEMICOLON) {
+            nextToken(); // Skip the semicolon and resume
+            return;
+        }
+        nextToken();
     }
 }
 
@@ -62,11 +92,11 @@ const char* tokenName(TokenType token) {
 }
 
 [[noreturn]] static void syntaxError(const string& message) {
-    cerr << "\n========================================\n";
-    cerr << " SYNTAX / SEMANTIC ERROR (Line " << yylineno << ")\n";
-    cerr << " Message: " << message << "\n";
-    cerr << "========================================\n";
-    exit(EXIT_FAILURE);
+    cout << "\n----------------------------------------\n";
+    cout << " SYNTAX / SEMANTIC ERROR (Line " << yylineno << ")\n";
+    cout << " Message: " << message << "\n";
+    cout << "----------------------------------------\n";
+    throw runtime_error(message);
 }
 
 static void match(TokenType expected) {
@@ -234,17 +264,22 @@ static void assignment() {
 }
 
 static void statement() {
-    if (currentToken == TOK_INT || currentToken == TOK_FLOAT) {
-        declaration();
-    }
-    else if (currentToken == TOK_ID) {
-        assignment();
-    }
-    else {
-        syntaxError(
-            string("expected declaration or assignment, but found '") +
-            currentLexeme + "'"
-        );
+    try {
+        if (currentToken == TOK_INT || currentToken == TOK_FLOAT) {
+            declaration();
+        }
+        else if (currentToken == TOK_ID) {
+            assignment();
+        }
+        else {
+            syntaxError(
+                string("expected declaration or assignment, but found '") +
+                currentLexeme + "'"
+            );
+        }
+    } catch (const exception& e) {
+        // Recover and continue parsing subsequent statements instead of crashing
+        synchronize();
     }
 }
 
@@ -263,14 +298,16 @@ void parseProgram() {
 
     statementList();
 
-    if (currentToken != TOK_EOF) {
-        syntaxError("Unexpected tokens at end of file: '" + currentLexeme + "'");
+    if (syntax_error_count > 0) {
+        cout << "\n========================================\n";
+        cout << " PARSING COMPLETED WITH " << syntax_error_count << " ERROR(S) RECOVERED\n";
+        cout << "========================================\n";
+    } else {
+        // Print Symbol Table on successful parse with zero errors
+        symbolTables.printTable();
+
+        cout << "\n========================================\n";
+        cout << " PARSING & SEMANTIC ANALYSIS SUCCESSFUL\n";
+        cout << "========================================\n";
     }
-
-    // Print Symbol Table on successful parse
-    symbolTables.printTable();
-
-    cout << "\n========================================\n";
-    cout << " PARSING & SEMANTIC ANALYSIS SUCCESSFUL\n";
-    cout << "========================================\n";
 }

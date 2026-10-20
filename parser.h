@@ -3,6 +3,12 @@
 
 #include <cstdio>
 #include <string>
+#pragma once
+#include <vector>
+#include <string>
+
+// Expose the global TAC instructions container across files
+extern std::vector<std::string> tac_instructions;
 
 enum TokenType {
     TOK_EOF = 0, 
